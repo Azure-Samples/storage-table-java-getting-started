@@ -1,9 +1,3 @@
----
-services:
-platforms:
-author: azure
----
-
 # storage-table-java-getting-started
 Basic operations with Azure Storage Table Service
 ## Running this sample
