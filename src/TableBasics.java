@@ -43,7 +43,7 @@ import com.microsoft.azure.storage.table.TableQuery.QueryComparisons;
  *  - Table Service Concepts - http://msdn.microsoft.com/en-us/library/dd179463.aspx
  *  - Table Service REST API - http://msdn.microsoft.com/en-us/library/dd179423.aspx
  *  - Azure Storage Java API - http://azure.github.io/azure-storage-java/
- *  - Storage Emulator - http://msdn.microsoft.com/en-us/library/azure/hh403989.aspx
+ *  - Storage Emulator - http://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/
  *
  * Instructions:
  *      This sample can be run using either the Azure Storage Emulator or your Azure Storage
@@ -55,7 +55,7 @@ import com.microsoft.azure.storage.table.TableQuery.QueryComparisons;
  *          2.  Set breakpoints and run the project.
  *
  *      To run the sample using the Storage Service
- *          1.  Open the app.config file and comment out the connection string for the emulator (UseDevelopmentStorage=True) and
+ *          1.  Open the config.properties file and comment out the connection string for the emulator (UseDevelopmentStorage=True) and
  *              uncomment the connection string for the storage service (AccountName=[]...)
  *          2.  Create a Storage Account through the Azure Portal and provide your [AccountName] and [AccountKey] in the config.properties file.
  *              See https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/ for more information.
