@@ -1,6 +1,6 @@
 ---
-services: Storage
-platforms: Java
+services: storage
+platforms: java
 author: sribhat-MSFT
 ---
 
