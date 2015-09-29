@@ -1,7 +1,7 @@
 ---
 services: Storage
 platforms: Java
-author: Azure Storage
+author: sribhat-MSFT
 ---
 
 # Azure Storage: Tables
