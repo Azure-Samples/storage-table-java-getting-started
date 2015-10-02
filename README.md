@@ -4,7 +4,7 @@ platforms: java
 author: sribhat-MSFT
 ---
 
-# Azure Storage: Tables
+# Getting Started with Azure Table Service in Java
 
 Azure Table Service Sample - Demonstrate how to perform common tasks using the Microsoft Azure Table Service including creating a table, CRUD operations, batch operations and different querying techniques.
 
