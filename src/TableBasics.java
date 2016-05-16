@@ -63,7 +63,9 @@ import com.microsoft.azure.storage.table.TableQuery.QueryComparisons;
  */
 public class TableBasics {
 
-    protected static CloudTable table = null;
+    protected static CloudTableClient tableClient = null;
+    protected static CloudTable table1 = null;
+    protected static CloudTable table2 = null;
     protected final static String tableNamePrefix = "tablebasics";
 
     /**
@@ -74,93 +76,118 @@ public class TableBasics {
      */
     public static void main(String[] args) throws Exception {
 
-        System.out.println("Azure Storage Table sample - Starting.\n");
+        System.out.println("Azure Storage Table sample - Starting.");
 
         Scanner scan = null;
         try {
             // Create a scanner for user input
             scan = new Scanner(System.in);
 
-            // Create new table with a randomized name
-            String tableName = tableNamePrefix + UUID.randomUUID().toString().replace("-", "");
-            System.out.println(String.format("\n1. Create a table with name \"%s\"", tableName));
-            try {
-                table = createTable(tableName);
-            }
-            catch (IllegalStateException e) {
-                System.out.println(String.format("\tTable already exists."));
-                throw e;
-            }
+            // Create a table client for interacting with the table service
+            tableClient = getTableClientReference();
+
+            // Create a new table with a randomized name
+            String tableName1 = tableNamePrefix + UUID.randomUUID().toString().replace("-", "");
+            System.out.println(String.format("\nCreate a table with name \"%s\"", tableName1));
+            table1 = createTable(tableClient, tableName1);
             System.out.println("\tSuccessfully created the table.");
 
-            // Create a sample entity for use
-            CustomerEntity customer = new CustomerEntity("Harp", "Walter");
-            customer.setEmail("Walter@contoso.com");
-            customer.setPhoneNumber("425-555-0101");
+            // Create a sample entities for use
+            CustomerEntity customer1 = new CustomerEntity("Harp", "Walter");
+            customer1.setEmail("walter@contoso.com");
+            customer1.setHomePhoneNumber("425-555-0101");
 
-            // Create and insert a customer entity
-            System.out.println("\n2. Insert a new entity.");
-            TableOperation insertOrMergeOperation = TableOperation.insertOrMerge(customer);
-            table.execute(insertOrMergeOperation);
-            System.out.println("\tSuccessfully inserted the new entity.");
+            // Create and insert new customer entities
+            System.out.println("\nInsert the new entities.");
+            table1.execute(TableOperation.insert(customer1));
+            System.out.println("\tSuccessfully inserted the new entities.");
 
             // Demonstrate how to read the entity using a point query
-            System.out.println("\n3. Read the inserted entity.");
-            TableOperation retrieveOperation = TableOperation.retrieve("Harp", "Walter", CustomerEntity.class);
-            customer = table.execute(retrieveOperation).getResultAsType();
-            if (customer != null) {
-                System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s", customer.getPartitionKey(), customer.getRowKey(), customer.getEmail(), customer.getPhoneNumber()));
+            System.out.println("\nRead the inserted entitities using point queries.");
+            customer1 = table1.execute(TableOperation.retrieve("Harp", "Walter", CustomerEntity.class)).getResultAsType();
+            if (customer1 != null) {
+                System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s\t%s", customer1.getPartitionKey(), customer1.getRowKey(), customer1.getEmail(), customer1.getHomePhoneNumber(), customer1.getWorkPhoneNumber()));
             }
 
-            // Demonstrate how to update the entity by changing the phone number
-            System.out.println("\n4. Update an existing entity by changing the phone number.");
-            customer.setPhoneNumber("425-555-0105");
-            TableOperation mergeOperation = TableOperation.merge(customer);
-            table.execute(mergeOperation);
+            // Demonstrate how to update and merge the entity
+            System.out.println("\nUpdate an existing entity by adding the work phone number and merging with the existing entity.");
+            CustomerEntity mergeCustomer = new CustomerEntity(customer1.getPartitionKey(), customer1.getRowKey());
+            mergeCustomer.setEtag(customer1.getEtag());
+            mergeCustomer.setWorkPhoneNumber("425-555-0105");
+            // Note the new entity does not have the home phone number or the email set, but the merged entity should retain the old one
+            table1.execute(TableOperation.merge(mergeCustomer));
             System.out.println("\tSuccessfully updated the existing entity.");
 
-            // Demonstrate how to read the updated entity using a point query
-            System.out.println("\n5. Read the updated entity.");
-            retrieveOperation = TableOperation.retrieve("Harp", "Walter", CustomerEntity.class);
-            customer = table.execute(retrieveOperation).getResultAsType();
-            if (customer != null) {
-                System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s", customer.getPartitionKey(), customer.getRowKey(), customer.getEmail(), customer.getPhoneNumber()));
+            // Display the updated entity
+            System.out.println("\nRead the updated entities.");
+            customer1 = table1.execute(TableOperation.retrieve("Harp", "Walter", CustomerEntity.class)).getResultAsType();
+            if (customer1 != null) {
+                System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s\t%s", customer1.getPartitionKey(), customer1.getRowKey(), customer1.getEmail(), customer1.getHomePhoneNumber(), customer1.getWorkPhoneNumber()));
+            }
+
+            // Demonstrate how to replace the entity
+            System.out.println("\nUpdate an existing entity by updating the work phone number and replacing the existing entity.");
+            CustomerEntity replaceCustomer = new CustomerEntity(customer1.getPartitionKey(), customer1.getRowKey());
+            replaceCustomer.setEmail(customer1.getEmail());
+            replaceCustomer.setEtag(customer1.getEtag());
+            replaceCustomer.setWorkPhoneNumber("425-555-0106");
+            // Note the new entity does not have the home phone number set, so the replaced entity should NOT retain the old one
+            table1.execute(TableOperation.replace(replaceCustomer));
+            System.out.println("\tSuccessfully updated the existing entity.");
+
+            // Display the replaced entity
+            System.out.println("\nRead the updated entities.");
+            customer1 = table1.execute(TableOperation.retrieve("Harp", "Walter", CustomerEntity.class)).getResultAsType();
+            if (customer1 != null) {
+                System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s\t%s", customer1.getPartitionKey(), customer1.getRowKey(), customer1.getEmail(), customer1.getHomePhoneNumber(), customer1.getWorkPhoneNumber()));
             }
 
             // Demonstrate how to delete an entity
-            System.out.println("\n6. Delete the entity.");
-            TableOperation deleteEntityOperation = TableOperation.delete(customer);
-            table.execute(deleteEntityOperation);
+            System.out.println("\nDelete an entity.");
+            table1.execute(TableOperation.delete(customer1));
             System.out.println("\tSuccessfully deleted the entity.");
 
-            // Demonstrate upsert and batch table operations
-            System.out.println("\n7. Insert a batch of new entities.");
-            batchInsertOfCustomerEntities(table);
+            // Create a new table with a randomized name
+            String tableName2 = tableNamePrefix + UUID.randomUUID().toString().replace("-", "");
+            System.out.println(String.format("\nCreate a table with name \"%s\"", tableName2));
+            table2 = createTable(tableClient, tableName2);
+            System.out.println("\tSuccessfully created the table.");
+
+            // Demonstrate batch table operations
+            System.out.println("\nInsert a batch of new entities.");
+            batchInsertOfCustomerEntities(table2);
             System.out.println("\tSuccessfully inserted the batch of entities.");
 
             // Query a range of data within a partition
-            System.out.println("\n8. Retrieve entities with surname of Smith and first names >= 15 and <= 70.");
-            partitionRangeQuery(table, "Smith", "0015", "0070");
+            System.out.println("\nRetrieve entities with surname of Smith and first names >= 40 and <= 60.");
+            partitionRangeQuery(table2, "Smith", "0040", "0060");
 
             // Query for all the data within a partition
-            System.out.println("\n9. Retrieve entities with surname of Smith.");
-            partitionScan(table, "Smith");
+            System.out.println("\nRetrieve entities with surname of Harp.");
+            partitionScan(table1, "Harp");
+            System.out.println("\n11. Retrieve entities with surname of Smith.");
+            partitionScan(table2, "Smith");
+
+            // Enumerate all tables in the storage account
+            System.out.println("\nEnumerate all tables in the storage account.");
+            for (String tableName : tableClient.listTables()) {
+                System.out.println(String.format("\t%s", tableName));
+            }
         }
         catch (Throwable t) {
             printException(t);
         }
         finally {
-            // Delete the table (If you do not want to delete the table comment out the block of code below)
-            if (table != null)
-            {
-                System.out.print("\n9. Delete the table. Press any key to continue...");
-                scan.nextLine();
-                if (table.deleteIfExists() == true) {
-                    System.out.println("\tSuccessfully deleted the table.");
-                }
-                else {
-                    System.out.println("\tNothing to delete.");
-                }
+            // Delete the tables (If you do not want to delete the tables comment out the block of code below)
+            System.out.print("\nDelete any tables that were created. Press any key to continue...");
+            scan.nextLine();
+
+            if (table1 != null && table1.deleteIfExists() == true) {
+                System.out.println(String.format("\tSuccessfully deleted the table: %s", table1.getName()));
+            }
+
+            if (table2 != null && table2.deleteIfExists() == true) {
+                System.out.println(String.format("\tSuccessfully deleted the table: %s", table2.getName()));
             }
 
             // Close the scanner
@@ -171,51 +198,18 @@ public class TableBasics {
     }
 
     /**
-     * Validates the connection string and returns the storage account.
+     * Validates the connection string and returns the storage table client.
      * The connection string must be in the Azure connection string format.
      *
-     * @param storageConnectionString Connection string for the storage service or the emulator
-     * @return The newly created CloudStorageAccount object
+     * @return The newly created CloudTableClient object
      *
-     * @throws URISyntaxException
-     * @throws IllegalArgumentException
-     * @throws InvalidKeyException
-     */
-    private static CloudStorageAccount createStorageAccountFromConnectionString(String storageConnectionString) throws IllegalArgumentException, URISyntaxException, InvalidKeyException {
-
-        CloudStorageAccount storageAccount;
-        try {
-            storageAccount = CloudStorageAccount.parse(storageConnectionString);
-        }
-        catch (IllegalArgumentException|URISyntaxException e) {
-            System.out.println("\nConnection string specifies an invalid URI.");
-            System.out.println("Please confirm the connection string is in the Azure connection string format.");
-            throw e;
-        }
-        catch (InvalidKeyException e) {
-            System.out.println("\nConnection string specifies an invalid key.");
-            System.out.println("Please confirm the AccountName and AccountKey in the connection string are valid.");
-            throw e;
-        }
-
-        return storageAccount;
-    }
-
-    /**
-     * Creates and returns a table for the sample application to use.
-     *
-     * @param tableName Name of the table to create
-     * @return The newly created CloudTable object
-     *
-     * @throws StorageException
      * @throws RuntimeException
      * @throws IOException
      * @throws URISyntaxException
      * @throws IllegalArgumentException
      * @throws InvalidKeyException
-     * @throws IllegalStateException
      */
-    private static CloudTable createTable(String tableName) throws StorageException, RuntimeException, IOException, InvalidKeyException, IllegalArgumentException, URISyntaxException, IllegalStateException {
+    private static CloudTableClient getTableClientReference() throws RuntimeException, IOException, IllegalArgumentException, URISyntaxException, InvalidKeyException {
 
         // Retrieve the connection string
         Properties prop = new Properties();
@@ -231,13 +225,41 @@ public class TableBasics {
             System.out.println("\nFailed to load config.properties file.");
             throw e;
         }
-        String storageConnectionString = prop.getProperty("StorageConnectionString");
 
-        // Retrieve storage account information from connection string.
-        CloudStorageAccount storageAccount = createStorageAccountFromConnectionString(storageConnectionString);
+        CloudStorageAccount storageAccount;
+        try {
+            storageAccount = CloudStorageAccount.parse(prop.getProperty("StorageConnectionString"));
+        }
+        catch (IllegalArgumentException|URISyntaxException e) {
+            System.out.println("\nConnection string specifies an invalid URI.");
+            System.out.println("Please confirm the connection string is in the Azure connection string format.");
+            throw e;
+        }
+        catch (InvalidKeyException e) {
+            System.out.println("\nConnection string specifies an invalid key.");
+            System.out.println("Please confirm the AccountName and AccountKey in the connection string are valid.");
+            throw e;
+        }
 
-        // Create a table client for interacting with the table service
-        CloudTableClient tableClient = storageAccount.createCloudTableClient();
+        return storageAccount.createCloudTableClient();
+    }
+
+    /**
+     * Creates and returns a table for the sample application to use.
+     *
+     * @param tableClient CloudTableClient object
+     * @param tableName Name of the table to create
+     * @return The newly created CloudTable object
+     *
+     * @throws StorageException
+     * @throws RuntimeException
+     * @throws IOException
+     * @throws URISyntaxException
+     * @throws IllegalArgumentException
+     * @throws InvalidKeyException
+     * @throws IllegalStateException
+     */
+    private static CloudTable createTable(CloudTableClient tableClient, String tableName) throws StorageException, RuntimeException, IOException, InvalidKeyException, IllegalArgumentException, URISyntaxException, IllegalStateException {
 
         // Create a new table
         CloudTable table = tableClient.getTableReference(tableName);
@@ -246,10 +268,11 @@ public class TableBasics {
                 throw new IllegalStateException(String.format("Table with name \"%s\" already exists.", tableName));
             }
         }
-        catch (StorageException e) {
-            System.out.println("\nCaught storage exception from the client.");
-            System.out.println("If running with the default configuration please make sure you have started the storage emulator.");
-            throw e;
+        catch (StorageException s) {
+            if (s.getCause() instanceof java.net.ConnectException) {
+                System.out.println("Caught connection exception from the client. If running with the default configuration please make sure you have started the storage emulator.");
+            }
+            throw s;
         }
 
         return table;
@@ -270,18 +293,29 @@ public class TableBasics {
     private static void batchInsertOfCustomerEntities(CloudTable table) throws StorageException {
 
         // Create the batch operation
-        TableBatchOperation batchOperation = new TableBatchOperation();
-
-        // Generate test data.
-        for (int i = 0; i < 100; i++) {
+        TableBatchOperation batchOperation1 = new TableBatchOperation();
+        for (int i = 1; i <= 50; i++) {
             CustomerEntity entity = new CustomerEntity("Smith", String.format("%04d", i));
-            entity.setEmail(String.format("%04d@contoso.com", i));
-            entity.setPhoneNumber(String.format("425-555-%04d", i));
-            batchOperation.insertOrMerge(entity);
+            entity.setEmail(String.format("smith%04d@contoso.com", i));
+            entity.setHomePhoneNumber(String.format("425-555-%04d", i));
+            entity.setWorkPhoneNumber(String.format("425-556-%04d", i));
+            batchOperation1.insertOrMerge(entity);
         }
 
         // Execute the batch operation
-        table.execute(batchOperation);
+        table.execute(batchOperation1);
+
+        // Create the batch operation (Note the overwrite for some entities part of the previous batch operation)
+        TableBatchOperation batchOperation2 = new TableBatchOperation();
+        for (int i = 45; i <= 100; i++) {
+            CustomerEntity entity = new CustomerEntity("Smith", String.format("%04d", i));
+            entity.setEmail(String.format("smith%04d@contoso.com", i));
+            entity.setWorkPhoneNumber(String.format("425-556-%04d", i));
+            batchOperation2.insertOrReplace(entity);
+        }
+
+        // Execute the batch operation
+        table.execute(batchOperation2);
     }
 
     /**
@@ -308,7 +342,7 @@ public class TableBasics {
 
         // Iterate through the results
         for (CustomerEntity entity : table.execute(rangeQuery)) {
-            System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s", entity.getPartitionKey(), entity.getRowKey(), entity.getEmail(), entity.getPhoneNumber()));
+            System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s\t%s", entity.getPartitionKey(), entity.getRowKey(), entity.getEmail(), entity.getHomePhoneNumber(), entity.getWorkPhoneNumber()));
         }
     }
 
@@ -329,7 +363,7 @@ public class TableBasics {
 
         // Iterate through the results
         for (CustomerEntity entity : table.execute(partitionScanQuery)) {
-            System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s", entity.getPartitionKey(), entity.getRowKey(), entity.getEmail(), entity.getPhoneNumber()));
+            System.out.println(String.format("\tCustomer: %s,%s\t%s\t%s\t%s", entity.getPartitionKey(), entity.getRowKey(), entity.getEmail(), entity.getHomePhoneNumber(), entity.getWorkPhoneNumber()));
         }
     }
 
@@ -338,11 +372,16 @@ public class TableBasics {
      *
      * @param ex Exception to be printed
      */
-    public static void printException(Throwable ex) {
+    public static void printException(Throwable t) {
 
         StringWriter stringWriter = new StringWriter();
         PrintWriter printWriter = new PrintWriter(stringWriter);
-        ex.printStackTrace(printWriter);
-        System.out.println(String.format("Exception details:\n%s\n", stringWriter.toString()));
+        t.printStackTrace(printWriter);
+        if (t instanceof StorageException) {
+            if (((StorageException) t).getExtendedErrorInformation() != null) {
+                System.out.println(String.format("\nError: %s", ((StorageException) t).getExtendedErrorInformation().getErrorMessage()));
+            }
+        }
+        System.out.println(String.format("Exception details:\n%s", stringWriter.toString()));
     }
 }

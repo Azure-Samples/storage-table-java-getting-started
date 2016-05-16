@@ -35,7 +35,8 @@ public class CustomerEntity extends TableServiceEntity {
     public CustomerEntity() { }
 
     public String email;
-    public String phoneNumber;
+    public String homePhoneNumber;
+    public String workPhoneNumber;
 
     public String getEmail() {
         return this.email;
@@ -45,11 +46,19 @@ public class CustomerEntity extends TableServiceEntity {
         this.email = email;
     }
 
-    public String getPhoneNumber() {
-        return this.phoneNumber;
+    public String getHomePhoneNumber() {
+        return this.homePhoneNumber;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public void setHomePhoneNumber(String homePhoneNumber) {
+        this.homePhoneNumber = homePhoneNumber;
+    }
+
+    public String getWorkPhoneNumber() {
+        return this.workPhoneNumber;
+    }
+
+    public void setWorkPhoneNumber(String workPhoneNumber) {
+        this.workPhoneNumber = workPhoneNumber;
     }
 }
