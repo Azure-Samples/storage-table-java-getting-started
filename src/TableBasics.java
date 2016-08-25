@@ -15,16 +15,10 @@
 //----------------------------------------------------------------------------------
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
-import java.util.Properties;
-import java.util.Scanner;
 import java.util.UUID;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.table.CloudTable;
 import com.microsoft.azure.storage.table.CloudTableClient;
@@ -33,33 +27,8 @@ import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableQuery;
 import com.microsoft.azure.storage.table.TableQuery.QueryComparisons;
 
-/*
- * Azure Table Service Sample - Demonstrate how to perform common tasks using the Microsoft Azure Table Service
- * including creating a table, CRUD operations, batch operations and different querying techniques.
- *
- * Documentation References:
- *  - What is a Storage Account - http://azure.microsoft.com/en-us/documentation/articles/storage-whatis-account/
- *  - Getting Started with Tables - http://azure.microsoft.com/en-us/documentation/articles/storage-java-how-to-use-table-storage/
- *  - Table Service Concepts - http://msdn.microsoft.com/en-us/library/dd179463.aspx
- *  - Table Service REST API - http://msdn.microsoft.com/en-us/library/dd179423.aspx
- *  - Azure Storage Java API - http://azure.github.io/azure-storage-java/
- *  - Storage Emulator - http://azure.microsoft.com/en-us/documentation/articles/storage-use-emulator/
- *
- * Instructions:
- *      This sample can be run using either the Azure Storage Emulator or your Azure Storage
- *      account by updating the config.properties file with your "AccountName" and "Key".
- *
- *      To run the sample using the Storage Emulator (default option - Only available on Microsoft Windows OS)
- *          1.  Start the Azure Storage Emulator by pressing the Start button or the Windows key and searching for it
- *              by typing "Azure Storage Emulator". Select it from the list of applications to start it.
- *          2.  Set breakpoints and run the project.
- *
- *      To run the sample using the Storage Service
- *          1.  Open the config.properties file and comment out the connection string for the emulator (UseDevelopmentStorage=True) and
- *              uncomment the connection string for the storage service (AccountName=[]...)
- *          2.  Create a Storage Account through the Azure Portal and provide your [AccountName] and [AccountKey] in the config.properties file.
- *              See https://azure.microsoft.com/en-us/documentation/articles/storage-create-storage-account/ for more information.
- *          3.  Set breakpoints and run the project.
+/**
+ * This sample illustrates basic usage of the Azure table storage service.
  */
 public class TableBasics {
 
@@ -71,20 +40,15 @@ public class TableBasics {
     /**
      * Azure Storage Table Sample
      *
-     * @param args No input arguments are expected from users.
      * @throws Exception
      */
-    public static void main(String[] args) throws Exception {
+    public void runSamples() throws Exception {
 
         System.out.println("Azure Storage Table sample - Starting.");
 
-        Scanner scan = null;
         try {
-            // Create a scanner for user input
-            scan = new Scanner(System.in);
-
             // Create a table client for interacting with the table service
-            tableClient = getTableClientReference();
+            tableClient = TableClientProvider.getTableClientReference();
 
             // Create a new table with a randomized name
             String tableName1 = tableNamePrefix + UUID.randomUUID().toString().replace("-", "");
@@ -175,12 +139,11 @@ public class TableBasics {
             }
         }
         catch (Throwable t) {
-            printException(t);
+            PrintHelper.printException(t);
         }
         finally {
             // Delete the tables (If you do not want to delete the tables comment out the block of code below)
-            System.out.print("\nDelete any tables that were created. Press any key to continue...");
-            scan.nextLine();
+            System.out.print("\nDelete any tables that were created.");
 
             if (table1 != null && table1.deleteIfExists() == true) {
                 System.out.println(String.format("\tSuccessfully deleted the table: %s", table1.getName()));
@@ -189,59 +152,9 @@ public class TableBasics {
             if (table2 != null && table2.deleteIfExists() == true) {
                 System.out.println(String.format("\tSuccessfully deleted the table: %s", table2.getName()));
             }
-
-            // Close the scanner
-            scan.close();
         }
 
         System.out.println("\nAzure Storage Table sample - Completed.\n");
-    }
-
-    /**
-     * Validates the connection string and returns the storage table client.
-     * The connection string must be in the Azure connection string format.
-     *
-     * @return The newly created CloudTableClient object
-     *
-     * @throws RuntimeException
-     * @throws IOException
-     * @throws URISyntaxException
-     * @throws IllegalArgumentException
-     * @throws InvalidKeyException
-     */
-    private static CloudTableClient getTableClientReference() throws RuntimeException, IOException, IllegalArgumentException, URISyntaxException, InvalidKeyException {
-
-        // Retrieve the connection string
-        Properties prop = new Properties();
-        try {
-            InputStream propertyStream = TableBasics.class.getClassLoader().getResourceAsStream("config.properties");
-            if (propertyStream != null) {
-                prop.load(propertyStream);
-            }
-            else {
-                throw new RuntimeException();
-            }
-        } catch (RuntimeException|IOException e) {
-            System.out.println("\nFailed to load config.properties file.");
-            throw e;
-        }
-
-        CloudStorageAccount storageAccount;
-        try {
-            storageAccount = CloudStorageAccount.parse(prop.getProperty("StorageConnectionString"));
-        }
-        catch (IllegalArgumentException|URISyntaxException e) {
-            System.out.println("\nConnection string specifies an invalid URI.");
-            System.out.println("Please confirm the connection string is in the Azure connection string format.");
-            throw e;
-        }
-        catch (InvalidKeyException e) {
-            System.out.println("\nConnection string specifies an invalid key.");
-            System.out.println("Please confirm the AccountName and AccountKey in the connection string are valid.");
-            throw e;
-        }
-
-        return storageAccount.createCloudTableClient();
     }
 
     /**
@@ -367,21 +280,5 @@ public class TableBasics {
         }
     }
 
-    /**
-     * Print the exception stack trace
-     *
-     * @param ex Exception to be printed
-     */
-    public static void printException(Throwable t) {
 
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter printWriter = new PrintWriter(stringWriter);
-        t.printStackTrace(printWriter);
-        if (t instanceof StorageException) {
-            if (((StorageException) t).getExtendedErrorInformation() != null) {
-                System.out.println(String.format("\nError: %s", ((StorageException) t).getExtendedErrorInformation().getErrorMessage()));
-            }
-        }
-        System.out.println(String.format("Exception details:\n%s", stringWriter.toString()));
-    }
 }
