@@ -17,35 +17,34 @@ class TableClientProvider {
      * The connection string must be in the Azure connection string format.
      *
      * @return The newly created CloudTableClient object
-     *
      */
-    static CloudTableClient getTableClientReference() throws RuntimeException, IOException, URISyntaxException, InvalidKeyException {
+    private static Properties prop;
 
+    static {
         // Retrieve the connection string
-        Properties prop = new Properties();
+        prop = new Properties();
         try {
             InputStream propertyStream = TableBasics.class.getClassLoader().getResourceAsStream("config.properties");
             if (propertyStream != null) {
                 prop.load(propertyStream);
-            }
-            else {
+            } else {
                 throw new RuntimeException();
             }
-        } catch (RuntimeException|IOException e) {
+        } catch (RuntimeException | IOException e) {
             System.out.println("\nFailed to load config.properties file.");
-            throw e;
+            throw new RuntimeException();
         }
+    }
 
+    static CloudTableClient getTableClientReference() throws RuntimeException, IOException, URISyntaxException, InvalidKeyException {
         CloudStorageAccount storageAccount;
         try {
             storageAccount = CloudStorageAccount.parse(prop.getProperty("StorageConnectionString"));
-        }
-        catch (IllegalArgumentException|URISyntaxException e) {
+        } catch (IllegalArgumentException | URISyntaxException e) {
             System.out.println("\nConnection string specifies an invalid URI.");
             System.out.println("Please confirm the connection string is in the Azure connection string format.");
             throw e;
-        }
-        catch (InvalidKeyException e) {
+        } catch (InvalidKeyException e) {
             System.out.println("\nConnection string specifies an invalid key.");
             System.out.println("Please confirm the AccountName and AccountKey in the connection string are valid.");
             throw e;
@@ -54,4 +53,11 @@ class TableClientProvider {
         return storageAccount.createCloudTableClient();
     }
 
+    public static boolean isAzureCosmosdbTable() {
+        if (prop != null) {
+            String connectionString = prop.getProperty("StorageConnectionString");
+            return connectionString != null && connectionString.contains("table.cosmosdb");
+        }
+        return false;
+    }
 }

@@ -37,34 +37,34 @@ class TableAdvanced {
     void runSamples() throws InvalidKeyException, URISyntaxException, IOException {
         System.out.println();
         System.out.println();
-        PrintHelper.printSampleStartInfo("Table Advanced");
+        if (!TableClientProvider.isAzureCosmosdbTable()) {
+            PrintHelper.printSampleStartInfo("Table Advanced");
+            // Create a table service client
+            CloudTableClient tableClient = TableClientProvider.getTableClientReference();
 
-        // Create a table service client
-        CloudTableClient tableClient = TableClientProvider.getTableClientReference();
+            try {
+                System.out.println("Service properties sample");
+                serviceProperties(tableClient);
+                System.out.println();
 
-        try {
-            System.out.println("Service properties sample");
-            serviceProperties(tableClient);
-            System.out.println();
+                System.out.println("CORS rules sample");
+                corsRules(tableClient);
+                System.out.println();
 
-            System.out.println("CORS rules sample");
-            corsRules(tableClient);
-            System.out.println();
+                System.out.println("Table Acl sample");
+                tableAcl(tableClient);
+                System.out.println();
 
-            System.out.println("Table Acl sample");
-            tableAcl(tableClient);
-            System.out.println();
-
-            // This will fail unless the account is RA-GRS enabled.
+                // This will fail unless the account is RA-GRS enabled.
 //            System.out.println("Service stats sample");
 //            serviceStats(tableClient);
 //            System.out.println();
-        }
-        catch (Throwable t) {
-            PrintHelper.printException(t);
-        }
+            } catch (Throwable t) {
+                PrintHelper.printException(t);
+            }
 
-        PrintHelper.printSampleCompleteInfo("Table Advanced");
+            PrintHelper.printSampleCompleteInfo("Table Advanced");
+        }
     }
 
     /**
