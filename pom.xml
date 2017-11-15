@@ -14,10 +14,10 @@
     </dependency>
   </dependencies>
   <build>
-    <sourceDirectory>src</sourceDirectory>
+    <sourceDirectory>src/main/java</sourceDirectory>
     <resources>
       <resource>
-        <directory>resources</directory>
+        <directory>src/main/resources</directory>
       </resource>
     </resources>
     <plugins>
@@ -51,10 +51,10 @@
                <configuration>
                  <descriptorRefs>
                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
+                 </descriptorRefs>
                 <archive>
                   <manifest>
-                    <mainClass>TableBasics</mainClass>
+                    <mainClass>com.microsoft.azure.cosmosdb.tablesample.Main</mainClass>
                   </manifest>
                 </archive>
               </configuration>

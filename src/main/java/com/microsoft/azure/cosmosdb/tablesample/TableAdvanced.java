@@ -13,6 +13,7 @@
   limitations under the License.
  */
 
+package com.microsoft.azure.cosmosdb.tablesample;
 import com.microsoft.azure.storage.*;
 import com.microsoft.azure.storage.table.*;
 import com.microsoft.azure.storage.table.CloudTable;
@@ -37,34 +38,36 @@ class TableAdvanced {
     void runSamples() throws InvalidKeyException, URISyntaxException, IOException {
         System.out.println();
         System.out.println();
-        if (!TableClientProvider.isAzureCosmosdbTable()) {
-            PrintHelper.printSampleStartInfo("Table Advanced");
-            // Create a table service client
-            CloudTableClient tableClient = TableClientProvider.getTableClientReference();
+        if (TableClientProvider.isAzureCosmosdbTable()) {
+            return;
+        }
 
-            try {
-                System.out.println("Service properties sample");
-                serviceProperties(tableClient);
-                System.out.println();
+        PrintHelper.printSampleStartInfo("Table Advanced");
+        // Create a table service client
+        CloudTableClient tableClient = TableClientProvider.getTableClientReference();
 
-                System.out.println("CORS rules sample");
-                corsRules(tableClient);
-                System.out.println();
+        try {
+            System.out.println("Service properties sample");
+            serviceProperties(tableClient);
+            System.out.println();
 
-                System.out.println("Table Acl sample");
-                tableAcl(tableClient);
-                System.out.println();
+            System.out.println("CORS rules sample");
+            corsRules(tableClient);
+            System.out.println();
 
-                // This will fail unless the account is RA-GRS enabled.
+            System.out.println("Table Acl sample");
+            tableAcl(tableClient);
+            System.out.println();
+
+            // This will fail unless the account is RA-GRS enabled.
 //            System.out.println("Service stats sample");
 //            serviceStats(tableClient);
 //            System.out.println();
-            } catch (Throwable t) {
-                PrintHelper.printException(t);
-            }
-
-            PrintHelper.printSampleCompleteInfo("Table Advanced");
+        } catch (Throwable t) {
+            PrintHelper.printException(t);
         }
+
+        PrintHelper.printSampleCompleteInfo("Table Advanced");
     }
 
     /**

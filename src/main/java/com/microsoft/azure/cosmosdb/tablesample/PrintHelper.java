@@ -12,7 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  */
-
+package com.microsoft.azure.cosmosdb.tablesample;
 import com.microsoft.azure.storage.StorageException;
 
 import java.io.PrintWriter;

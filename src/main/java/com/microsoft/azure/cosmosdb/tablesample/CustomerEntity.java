@@ -13,7 +13,7 @@
 // organization, product, domain name, email address, logo, person,
 // places, or events is intended or should be inferred.
 //----------------------------------------------------------------------------------
-
+package com.microsoft.azure.cosmosdb.tablesample;
 import com.microsoft.azure.storage.table.TableServiceEntity;
 
 /**

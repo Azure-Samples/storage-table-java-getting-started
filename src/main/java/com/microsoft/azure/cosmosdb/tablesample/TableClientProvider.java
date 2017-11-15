@@ -1,3 +1,4 @@
+package com.microsoft.azure.cosmosdb.tablesample;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.table.CloudTableClient;
 
