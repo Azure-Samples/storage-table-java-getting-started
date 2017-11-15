@@ -13,6 +13,7 @@
   limitations under the License.
  */
 
+package com.microsoft.azure.cosmosdb.tablesample;
 import com.microsoft.azure.storage.*;
 import com.microsoft.azure.storage.table.*;
 import com.microsoft.azure.storage.table.CloudTable;
@@ -37,8 +38,11 @@ class TableAdvanced {
     void runSamples() throws InvalidKeyException, URISyntaxException, IOException {
         System.out.println();
         System.out.println();
-        PrintHelper.printSampleStartInfo("Table Advanced");
+        if (TableClientProvider.isAzureCosmosdbTable()) {
+            return;
+        }
 
+        PrintHelper.printSampleStartInfo("Table Advanced");
         // Create a table service client
         CloudTableClient tableClient = TableClientProvider.getTableClientReference();
 
@@ -59,8 +63,7 @@ class TableAdvanced {
 //            System.out.println("Service stats sample");
 //            serviceStats(tableClient);
 //            System.out.println();
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             PrintHelper.printException(t);
         }
 
